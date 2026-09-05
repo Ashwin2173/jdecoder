@@ -16,6 +16,33 @@ CONSTANT_MethodHandle = 15
 CONSTANT_MethodType = 16
 CONSTANT_InvokeDynamic = 18
 
+class_access_flags = {
+    0x0001 : "ACC_PUBLIC",
+    0x0002 : "ACC_PRIVATE",
+    0x0004 : "ACC_PROTECTED",
+    0x0008 : "ACC_STATIC",
+    0x0010 : "ACC_FINAL",
+    0x0040 : "ACC_VOLATILE",
+    0x0080 : "ACC_TRANSIENT",
+    0x1000 : "ACC_SYNTHETIC",
+    0x4000 : "ACC_ENUM"
+}
+
+method_access_flag = {
+    0x0001: "ACC_PUBLIC",
+    0x0002: "ACC_PRIVATE",
+    0x0004: "ACC_PROTECTED",
+    0x0008: "ACC_STATIC",
+    0x0010: "ACC_FINAL",
+    0x0020: "ACC_SYNCHRONIZED",
+    0x0040: "ACC_BRIDGE",
+    0x0080: "ACC_VARARGS",
+    0x0100: "ACC_NATIVE",
+    0x0400: "ACC_ABSTRACT",
+    0x0800: "ACC_STRICT",
+    0x1000: "ACC_SYNTHETIC"
+}
+
 def read_u1(f): return f.read(1)
 def read_u2(f): return f.read(2)
 def read_u4(f): return f.read(4)
@@ -116,11 +143,18 @@ def parse_attribute_info(f, program, count):
         attr_list.append(info)
     return attr_list
 
+def parse_access_flag(value, types):
+    result = list()
+    for (k, v) in types.items():
+        if k & value:
+            result.append(v)
+    return result
+
 def parse_method(f, program, count):
     methods = list()
     for _ in range(count):
         methods.append({
-            "access_flags": to_str(read_u2(f)),
+            "access_flags": parse_access_flag(to_int(read_u2(f)), method_access_flag),
             "name_index": to_int(read_u2(f)),
             "descriptor_index": to_int(read_u2(f)),
             "attributes_count": (count := to_int(read_u2(f))),
@@ -136,7 +170,7 @@ def parse() -> None:
         program['major'] = to_int(read_u2(f))
         program['minor'] = to_int(read_u2(f))
         program['constant_pool'] = parse_constant_pool(f)
-        program['access_flags'] = to_int(read_u2(f))
+        program['access_flags'] = parse_access_flag(to_int(read_u2(f)), class_access_flags)
         program['this_class'] = to_int(read_u2(f))
         program['super_class'] = to_int(read_u2(f))
         program['interfaces_count'] = to_int(read_u2(f))
