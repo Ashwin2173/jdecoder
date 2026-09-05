@@ -52,9 +52,14 @@ def parse_constant_pool(f):
                 "length": length,
                 "bytes": to_str(read_un(f, length))
             })
+        elif tag == CONSTANT_String:
+            const.append({
+                "type": "CONSTANT_String",
+                "string_index": to_int(read_u2(f))
+            })
         else:
             print("Unhanled const type:", tag)
-            break
+            exit(1)
     return const
 
 def parse_code_attribute(f, program):
